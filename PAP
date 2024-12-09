@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Fit4Construir</title>
+    <style>
+      /* Estilo geral do corpo */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: white;
+        color: black;
+        overflow-x: hidden;
+        padding-top: 50px;  /* Ajuste para dar espaço à barra superior fixa */
+      }
+
+      /* Barra superior (navbar) */
+      .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        background-color: #f0f0f0;
+        border-bottom: 1px solid #ccc;
+        position: fixed;
+        top: 0;
+        z-index: 1000;
+      }
+
+      /* Itens centralizados na navbar */
+      .navbar .center {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-grow: 1; /* Permite que os itens ocupem todo o espaço disponível */
+        justify-content: left; /* Centraliza os itens dentro da navbar */
+      }
+
+      /* Campo de pesquisa */
+      .navbar input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 300px;
+        max-width: 100%;
+      }
+
+      /* Ícones e botões */
+      .navbar button,
+      .navbar .icon {
+        background: none;
+        border: none;
+        font-size: 20px;
+        margin: 0 5px;
+        cursor: pointer;
+      }
+
+      .navbar .icon {
+        font-size: 24px;
+      }
+
+      /* Ajuste da barra lateral */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px;
+        width: 250px;
+        height: 100%;
+        background-color: #f8f8f8;
+        border-right: 1px solid #ccc;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        transition: 0.3s;
+        z-index: 1000;
+      }
+
+      /* Botões da barra lateral */
+      .sidebar ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .sidebar ul li {
+        margin: 15px 0;
+      }
+
+      .sidebar ul li button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        background: none;
+        text-align: left;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      /* Botão para fechar a barra lateral */
+      .close-btn {
+        text-align: right;
+        font-size: 20px;
+        cursor: pointer;
+        border: none;
+        background: none;
+      }
+
+      /* Estilo para o modo escuro */
+      .dark-mode {
+        background-color: #121212;
+        color: white;
+      }
+
+      .dark-mode .navbar {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #444;
+      }
+
+      .dark-mode .navbar input {
+        background-color: #2e2e2e;
+        color: white;
+      }
+
+      .dark-mode .sidebar {
+        background-color: #1e1e1e;
+        border-color: #444;
+      }
+
+      .dark-mode .icon,
+      .dark-mode button {
+        color: white;
+      }
+
+      /* Ajustes no ícone do carrinho para não sair da tela */
+      .navbar #cartButton {
+        position: relative;
+        z-index: 1001;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Barra superior -->
+    <div class="navbar">
+      <div class="center">
+        <!-- Botão para abrir a barra lateral -->
+        <button id="menuButton" class="icon">☰</button>
+        <!-- Nome do site -->
+        <span>Fit4Construir</span>
+        <!-- Botão Configurador -->
+        <button>Configurador</button>
+        <!-- Campo de pesquisa -->
+        <input type="text" placeholder="Escreve aqui o que procuras...">
+      </div>
+      <div>
+        <!-- Alternar tema -->
+        <span id="toggleTheme" class="icon">☀️</span>
+        <!-- Ícones adicionais -->
+        <span id="starButton" class="icon">⭐</span>
+        <span id="profileButton" class="icon">👤</span>
+        <span id="cartButton" class="icon">🛒</span>
+      </div>
+    </div>
+
+    <!-- Barra lateral -->
+    <div class="sidebar" id="sidebar">
+      <button class="close-btn" id="closeSidebar">X</button>
+      <ul>
+        <li><button>Computadores</button></li>
+        <li><button>Componentes</button></li>
+        <li><hr></li>
+        <li><button>Configurador</button></li>
+        <li><button>Comparador</button></li>
+        <li><button>Favoritos</button></li>
+      </ul>
+    </div>
+
+    <script>
+      // Alternar entre tema claro e escuro
+      document.getElementById("toggleTheme").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        document.getElementById("sidebar").classList.toggle("dark-mode");
+        document.getElementById("toggleTheme").textContent =
+          document.body.classList.contains("dark-mode") ? "🌙" : "☀️";
+      });
+
+      // Controle da barra lateral
+      const sidebar = document.getElementById("sidebar");
+      document.getElementById("menuButton").addEventListener("click", () => {
+        sidebar.style.left = "0";
+      });
+      document.getElementById("closeSidebar").addEventListener("click", () => {
+        sidebar.style.left = "-250px";
+      });
+
+      // Funcionalidade dos ícones
+      document.getElementById("starButton").addEventListener("click", () => {
+        alert("Você clicou na estrela!");
+      });
+
+      document.getElementById("profileButton").addEventListener("click", () => {
+        alert("Você clicou no perfil!");
+      });
+
+      document.getElementById("cartButton").addEventListener("click", () => {
+        alert("Você clicou no carrinho!");
+      });
+    </script>
+  </body>
+</html>
