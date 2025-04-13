@@ -1,206 +1,187 @@
+<?php
+session_start();
+// Verifica se o usuário está logado
+$nomeUsuario = "Minha Conta"; // Valor padrão
+if (isset($_SESSION["nome"])) {
+    $nomeUsuario = $_SESSION["nome"]; // Obtém o nome do utilizador logado
+}
+?>
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Fit4Construir</title>
-    <style>
-      /* Estilo geral do corpo */
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: white;
-        color: black;
-        overflow-x: hidden;
-        padding-top: 50px;  /* Ajuste para dar espaço à barra superior fixa */
-      }
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fit4Construir</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #000;
+    }
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #ffffff;
+      padding: 10px 20px;
+      color: #000;
+    }
+    .icons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .profile {
+      position: relative;
+      cursor: pointer;
+    }
+    .profile button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 5px 10px;
+      color: inherit; /* Mantém a cor do texto */
+      transition: color 0.3s;
+    }
+    .profile button:hover {
+      color: #555; /* Apenas muda a cor no hover */
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 40px;
+      right: 0;
+      background-color: #ffffff;
+      padding: 10px;
+      border-radius: 4px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      min-width: 140px;
+      transition: opacity 0.3s, transform 0.2s ease-in-out;
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    .dropdown.open {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .dropdown a {
+      display: block;
+      padding: 8px;
+      text-decoration: none;
+      color: #000;
+      transition: background-color 0.3s;
+    }
+    .dropdown a:hover {
+      background-color: #000;
+      color: #fff;
+    }
 
-      /* Barra superior (navbar) */
-      .navbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        background-color: #f0f0f0;
-        border-bottom: 1px solid #ccc;
-        position: fixed;
-        top: 0;
-        z-index: 1000;
-      }
-
-      /* Itens centralizados na navbar */
-      .navbar .center {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-grow: 1; /* Permite que os itens ocupem todo o espaço disponível */
-        justify-content: left; /* Centraliza os itens dentro da navbar */
-      }
-
-      /* Campo de pesquisa */
-      .navbar input {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        width: 300px;
-        max-width: 100%;
-      }
-
-      /* Ícones e botões */
-      .navbar button,
-      .navbar .icon {
-        background: none;
-        border: none;
-        font-size: 20px;
-        margin: 0 5px;
-        cursor: pointer;
-      }
-
-      .navbar .icon {
-        font-size: 24px;
-      }
-
-      /* Ajuste da barra lateral */
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: -250px;
-        width: 250px;
-        height: 100%;
-        background-color: #f8f8f8;
-        border-right: 1px solid #ccc;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        transition: 0.3s;
-        z-index: 1000;
-      }
-
-      /* Botões da barra lateral */
-      .sidebar ul {
-        list-style-type: none;
-        padding: 0;
-      }
-
-      .sidebar ul li {
-        margin: 15px 0;
-      }
-
-      .sidebar ul li button {
-        width: 100%;
-        padding: 10px;
-        border: none;
-        background: none;
-        text-align: left;
-        font-size: 16px;
-        cursor: pointer;
-      }
-
-      /* Botão para fechar a barra lateral */
-      .close-btn {
-        text-align: right;
-        font-size: 20px;
-        cursor: pointer;
-        border: none;
-        background: none;
-      }
-
-      /* Estilo para o modo escuro */
-      .dark-mode {
-        background-color: #121212;
-        color: white;
-      }
-
-      .dark-mode .navbar {
-        background-color: #1e1e1e;
-        border-bottom: 1px solid #444;
-      }
-
-      .dark-mode .navbar input {
-        background-color: #2e2e2e;
-        color: white;
-      }
-
-      .dark-mode .sidebar {
-        background-color: #1e1e1e;
-        border-color: #444;
-      }
-
-      .dark-mode .icon,
-      .dark-mode button {
-        color: white;
-      }
-
-      /* Ajustes no ícone do carrinho para não sair da tela */
-      .navbar #cartButton {
-        position: relative;
-        z-index: 1001;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Barra superior -->
-    <div class="navbar">
-      <div class="center">
-        <!-- Botão para abrir a barra lateral -->
-        <button id="menuButton" class="icon">☰</button>
-        <!-- Nome do site -->
-        <span>Fit4Construir</span>
-        <!-- Botão Configurador -->
-        <button>Configurador</button>
-        <!-- Campo de pesquisa -->
-        <input type="text" placeholder="Escreve aqui o que procuras...">
-      </div>
-      <div>
-        <!-- Alternar tema -->
-        <span id="toggleTheme" class="icon">☀️</span>
-        <!-- Ícones adicionais -->
-        <span id="starButton" class="icon">⭐</span>
-        <span id="profileButton" class="icon">👤</span>
-        <span id="cartButton" class="icon">🛒</span>
+    /* Estilização modo escuro */
+    .dark {
+      background-color: #1e1e1e;
+      color: #fff;
+    }
+    .navbar.dark {
+      background-color: #1e1e1e;
+    }
+    .dropdown.dark {
+      background-color: #1e1e1e;
+    }
+    .dropdown.dark a {
+      color: #fff;
+    }
+    .dropdown.dark a:hover {
+      background-color: #1e1e1e;
+    }
+    .dropdown.dark li a {
+      background-color: #1e1e1e; /* Caixa preta */
+      color: #fff;
+      padding: 10px;
+      display: block;
+      text-align: center;
+    }
+    .dropdown.dark li a:hover {
+      background-color: #444; /* Igual aos botões da barra lateral */
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <button class="menu-toggle" aria-label="Alternar Barra Lateral" onclick="toggleSidebar()">☰</button>
+    <div class="logo">Fit4Construir</div>
+    <div class="search-bar">
+      <input type="text" class="search-input" placeholder="Escreve aqui o que procuras..." aria-label="Pesquisar">
+    </div>
+    <div class="icons">
+      <button class="icon toggle-theme" aria-label="Alternar Tema" onclick="toggleTheme()" style="background: none; border: none; color: inherit;">🌞</button>
+      
+      <!-- Botão Minha Conta -->
+      <div class="profile">
+        <button onclick="toggleDropdown()">👤 <?php echo htmlspecialchars($nomeUsuario, ENT_QUOTES, 'UTF-8'); ?></button>
+        <ul class="dropdown" id="dropdownMenu">
+          <?php if (!isset($_SESSION["nome"])) { ?>
+            <li><a href="../registro/registro.php">Registar</a></li>
+            <li><a href="../login/login.php">Login</a></li>
+          <?php } else { ?>
+            <li><a href="../login/logout.php">Logout</a></li>
+          <?php } ?>
+        </ul>
       </div>
     </div>
-
-    <!-- Barra lateral -->
-    <div class="sidebar" id="sidebar">
-      <button class="close-btn" id="closeSidebar">X</button>
-      <ul>
-        <li><button>Computadores</button></li>
-        <li><button>Componentes</button></li>
-        <li><hr></li>
-        <li><button>Configurador</button></li>
-        <li><button>Comparador</button></li>
-        <li><button>Favoritos</button></li>
-      </ul>
+  </header>
+  <!-- Barra lateral -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="close-sidebar" onclick="toggleSidebar()">×</div>
+      <div class="logo">Fit4Construir</div>
     </div>
+    <a href="#">Computadores</a>
+    <a href="#">Componentes</a>
+    <div class="separator"></div>
+    <a href="#">Configurador</a>
+    <a href="#">Comparador</a>
+    <a href="#">Favoritos</a>
+  </div>
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+    function toggleTheme() {
+      const body = document.body;
+      const themeIcon = document.querySelector('.toggle-theme');
+      const navbar = document.querySelector('.navbar');
+      const searchInput = document.querySelector('.search-input');
+      const dropdown = document.getElementById("dropdownMenu");
 
-    <script>
-      // Alternar entre tema claro e escuro
-      document.getElementById("toggleTheme").addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
-        document.getElementById("sidebar").classList.toggle("dark-mode");
-        document.getElementById("toggleTheme").textContent =
-          document.body.classList.contains("dark-mode") ? "🌙" : "☀️";
-      });
+      body.classList.toggle('dark');
+      navbar.classList.toggle('dark');
+      searchInput.classList.toggle('dark');
+      document.querySelector('.sidebar').classList.toggle('dark');
+      dropdown.classList.toggle('dark');
 
-      // Controle da barra lateral
-      const sidebar = document.getElementById("sidebar");
-      document.getElementById("menuButton").addEventListener("click", () => {
-        sidebar.style.left = "0";
-      });
-      document.getElementById("closeSidebar").addEventListener("click", () => {
-        sidebar.style.left = "-250px";
-      });
-
-      // Funcionalidade dos ícones
-      document.getElementById("starButton").addEventListener("click", () => {
-        alert("Você clicou na estrela!");
-      });
-
-      document.getElementById("profileButton").addEventListener("click", () => {
-        alert("Você clicou no perfil!");
-      });
-
-      document.getElementById("cartButton").addEventListener("click", () => {
-        alert("Você clicou no carrinho!");
-      });
-    </script>
-  </body>
+      themeIcon.textContent = body.classList.contains('dark') ? '🌙' : '🌞';
+    }
+    function toggleDropdown() {
+      document.getElementById("dropdownMenu").classList.toggle("open");
+    }
+    // Fechar dropdown ao clicar fora
+    document.addEventListener("click", function(event) {
+      const dropdown = document.getElementById("dropdownMenu");
+      const profileButton = document.querySelector(".profile button");
+      
+      if (!profileButton.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.remove("open");
+      }
+    });
+  </script>
+</body>
 </html>
