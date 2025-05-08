@@ -1,74 +1,27 @@
 <?php
 session_start();
-include __DIR__ . '/../connection/db.php'; // Conexão com o banco de dados
-
-// Ativar exibição de erros para depuração (remover em produção)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Função para limitar tentativas de login (Proteção contra Brute Force)
-function is_brute_force($conn, $email) {
-    $stmt = $conn->prepare("SELECT failed_attempts, last_attempt FROM utilizador WHERE email = :email");
-    $stmt->bindParam(':email', $email);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($user && $user['failed_attempts'] >= 5 && strtotime($user['last_attempt']) > time() - 300) {
-        return true; // Bloqueia o login por 5 minutos após 5 tentativas falhas
-    }
-    return false;
-}
+include __DIR__ . '/../connection/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = trim($_POST['password'] ?? '');
-    $token = $_POST['g-recaptcha-response'] ?? ''; // Captcha
-    
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
 
-    // Verificação do Google reCAPTCHA
-    $secretKey = 'SUA_CHAVE_SECRETA_DO_RECAPTCHA';
-    $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$secretKey&response=$token");
-    $responseKeys = json_decode($response, true);
-
-    if (!$responseKeys["success"]) {
-        die("Falha na verificação do CAPTCHA.");
+    if (empty($email) || empty($password)) {
+        die("Por favor, preencha todos os campos.");
     }
 
-    if (is_brute_force($conn, $email)) {
-        die("Muitas tentativas falhas. Tente novamente mais tarde.");
-    }
-
-    // Buscar usuário no banco de dados
-    $sql = "SELECT id, nome, apelido, password, failed_attempts FROM utilizador WHERE email = :email";
-    $stmt = $conn->prepare($sql);
+    $sql = "SELECT id, nome, apelido, password FROM utilizador WHERE email = :email";
+    $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':email', $email);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
-        // Resetar tentativas falhas
-        $stmt = $conn->prepare("UPDATE utilizador SET failed_attempts = 0 WHERE email = :email");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-
-        // Implementação de autenticação de dois fatores (2FA) com código temporário
-        $codigo_2fa = rand(100000, 999999);
-        $_SESSION['codigo_2fa'] = $codigo_2fa;
-        $_SESSION['temp_user_id'] = $user['id'];
-        $_SESSION['temp_user_nome'] = trim($user['nome'] . ' ' . $user['apelido']);
-
-        // Enviar código por e-mail (Substituir pelo serviço de envio real)
-        mail($email, "Seu código de autenticação", "Seu código de autenticação é: $codigo_2fa");
-
-        header("Location: verificar_2fa.php"); // Redireciona para a página de verificação do 2FA
+        $_SESSION['id'] = $user['id'];
+        $_SESSION['nome'] = trim($user['nome'] . ' ' . $user['apelido']);
+        header("Location: ../geral/pap.php");
         exit;
     } else {
-        // Atualizar tentativas falhas
-        $stmt = $conn->prepare("UPDATE utilizador SET failed_attempts = failed_attempts + 1, last_attempt = NOW() WHERE email = :email");
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-
         echo "Email ou senha incorretos.";
     }
 }
@@ -80,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -96,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 320px;
+            width: 300px;
         }
         h1 {
             text-align: center;
@@ -123,22 +75,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         input[type="submit"]:hover {
             background-color: #333;
         }
-        .error {
-            color: red;
+        .forgot-password-link {
+            display: block;
             text-align: center;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .forgot-password-link:hover {
+            text-decoration: underline;
+        }
+        .forgot-password-link span {
+            font-weight: bold;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+        }
+
+        .toggle-password svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #eyeOpen {
+            display: none;
         }
     </style>
 </head>
-
 <body>
     <div class="login-container">
         <h1>Login</h1>
-        <form action="login.php" method="post">
-            <input type="text" name="email" placeholder="Email" required autocomplete="off">
-            <input type="password" name="password" placeholder="Password" required autocomplete="off">
-            <div class="g-recaptcha" data-sitekey="SUA_CHAVE_PUBLICA_DO_RECAPTCHA"></div>
+        <?php if (isset($erro)) { ?>
+            <div class="error"><?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php } ?>
+        <form action="login.php" method="post" autocomplete="off">
+            <input type="text" name="email" placeholder="Email" required autocomplete="off">        
+            <div class="password-wrapper">
+                <input type="password" name="password" id="password" placeholder="Password" required autocomplete="off">
+                <span class="toggle-password" onclick="togglePassword()">
+                    <!-- Olho fechado -->
+                    <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26">
+                        <path d="M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zm0 13c-3.2 0-6-2.5-6-5.5S8.8 6.5 12 6.5s6 2.5 6 5.5-2.8 5.5-6 5.5zM3 3l18 18-1.5 1.5L1.5 4.5 3 3z"/>
+                    </svg>
+                    <!-- Olho aberto -->
+                    <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M12 6c-3.3 0-6.3 1.8-8 4.5 1.7 2.7 4.7 4.5 8 4.5s6.3-1.8 8-4.5C18.3 7.8 15.3 6 12 6zm0 7.5c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/>
+                    </svg>
+                </span>
+            </div>
             <input type="submit" value="Entrar">
         </form>
+        <a href="/pap/registro/registro.php" class="forgot-password-link">Ainda não tem conta? <span>Criar conta</span></a>
+        <a href="recuperar.php" class="forgot-password-link">Esqueceu sua senha?</a>    
     </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const eyeOpen = document.getElementById('eyeOpen');
+            const eyeClosed = document.getElementById('eyeClosed');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeOpen.style.display = 'inline';
+                eyeClosed.style.display = 'none';
+            } else {
+                input.type = 'password';
+                eyeOpen.style.display = 'none';
+                eyeClosed.style.display = 'inline';
+            }
+        }
+    </script>
 </body>
 </html>
